@@ -1,0 +1,11 @@
+apiVersion: serving.knative.dev/v1alpha1
+kind: Route
+metadata:
+  name: stock-route-example
+  namespace: myproject
+spec:
+  traffic:
+  - revisionName: stock-configuration-example-00001 
+    percent: 50 
+  - revisionName: stock-configuration-example-00002 
+    percent: 50  
