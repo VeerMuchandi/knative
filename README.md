@@ -9,4 +9,4 @@
 * [Traffic Splitting Example](./6.TrafficSplitting.md)
 
 ## Knative on Minishift
-WIP
+* [Installing Knative on Minishift](./1a.StartingKnativeOnMinishift.md)
