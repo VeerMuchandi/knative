@@ -60,5 +60,5 @@
   failed_when: "oc_cmd.rc != 0 or (oc_cmd.stdout_lines | length ) < (istio_deployments | length)"
   changed_when: false
   until: oc_cmd is successful
-  retries: 30
-  delay: 10
+  retries: "{{ (istio_wait_start.seconds / istio_wait_start.delay) | int }}"
+  delay: "{{ istio_wait_start.delay }}"

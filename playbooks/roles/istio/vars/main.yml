@@ -1,5 +1,8 @@
 # vim: ts=2 sw=2 expandtab ai
 ---
+istio_wait_start:
+  seconds: 600
+  delay: 10
 istio_ns: istio-system
 istio_scc_policy: anyuid
 istio_scc_service_accounts:
