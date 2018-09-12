@@ -1,0 +1,51 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+
+- name: "Check if knative is installed"
+  command: "oc get cm -n knative-build config-logging"
+  register: oc_cmd
+  changed_when:
+    - oc_cmd.rc != 0
+    - errline in oc_cmd.stderr_lines
+  failed_when:
+    - oc_cmd.rc != 0
+    - errline not in oc_cmd.stderr_lines
+  vars:
+    errline: 'Error from server (NotFound): namespaces "knative-build" not found'
+
+- name: "Install latest knative and run it in {{ knative_service_type }} mode"
+  when: oc_cmd is changed
+  shell: |
+    set -e -E
+    T=$(mktemp)
+    trap "rm -rf $T" EXIT
+    curl -L {{ knative_url }} > $T
+    sed 's/LoadBalancer/{{ knative_service_type }}/' $T | oc apply -f -
+
+- name: "Get list of deployments to watch"
+  command: "oc get deployment -n knative-serving -o json"
+  changed_when: false
+  register: knative_deployments
+
+- set_fact:
+    knative_deployments: "{{ tmp['items'] | map(attribute='metadata.name') | list }}"
+  vars:
+    tmp: "{{ knative_deployments.stdout | from_json }}"
+
+- debug:
+    var: knative
+  vars:
+    knative:
+      pods: "{{ knative_deployments | length }}"
+      deployments: "{{ knative_deployments | join(', ') }}"
+      watch_cmd: "watch oc get pods -n knative-serving"
+
+- name: "wait for knative to come up"
+  shell: |
+    oc get pods -n knative-serving | grep Running
+  register: oc_cmd
+  failed_when: "oc_cmd.rc != 0 or (oc_cmd.stdout_lines | length ) < (knative_deployments | length)"
+  changed_when: false
+  until: oc_cmd is successful
+  retries: 30
+  delay: 10

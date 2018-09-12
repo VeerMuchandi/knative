@@ -1,0 +1,27 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+
+- name: determine cluster ip
+  command: minishift ip
+  register: cluster_ip
+
+- name: "ssh_key: get machine path"
+  shell: |
+    eval $(minishift docker-env)
+    ls $DOCKER_CERT_PATH/../machines/knative/id_rsa
+  register: cluster_sshkey
+
+- name: set variables
+  set_fact:
+    cluster_ip: "{{ cluster_ip.stdout | ipaddr('address') }}"
+    cluster_sshkey: "{{ cluster_sshkey.stdout | realpath }}"
+
+- name: add cluster host
+  add_host:
+    name: "{{ minishift_profile }}"
+    groups:
+      - cluster
+    ansible_user: "{{ minishift_user }}"
+    ansible_ssh_private_key_file: "{{ cluster_sshkey }}"
+    ansible_host: "{{ cluster_ip }}"
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"

@@ -1,0 +1,5 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+
+knative_url: https://storage.googleapis.com/knative-releases/serving/latest/release-lite.yaml
+knative_service_type: NodePort

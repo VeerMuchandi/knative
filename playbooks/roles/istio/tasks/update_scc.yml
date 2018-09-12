@@ -1,0 +1,20 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+
+- name: "Get list of istio service accounts for {{ istio_scc_policy }}"
+  command: "oc get scc {{ istio_scc_policy }} -o json"
+  register: oc_cmd
+  changed_when: false
+
+- set_fact:
+    sa_found: "{{ tmp.users | select('match', ns+'.*') | map('replace', ns, '') | select('in', istio_scc_service_accounts) | list }}"
+  vars:
+    tmp: "{{ oc_cmd.stdout | from_json }}"
+    ns: "system:serviceaccount:{{ istio_ns }}:"
+
+- set_fact:
+    sa_missing: "{{ istio_scc_service_accounts | difference(sa_found) }}"
+
+- name: "Elevate missing SCCs on the service accounts in the istio-system project to {{ istio_scc_policy }}"
+  command: "oc adm policy add-scc-to-user {{ istio_scc_policy }} -z {{ item }} -n {{ istio_ns }}"
+  with_items: "{{ sa_missing }}"

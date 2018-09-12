@@ -1,0 +1,7 @@
+[minishift:vars]
+# minishift_vm_driver=virtualbox
+minishift_memory=5GB
+minishift_isoUrl=https://zfs1.virt.gonoph.net/pulp/content/isos/minishift-centos7.iso
+
+[minishift]
+localhost
