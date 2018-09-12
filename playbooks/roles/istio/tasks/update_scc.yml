@@ -5,6 +5,10 @@
   command: "oc get scc {{ istio_scc_policy }} -o json"
   register: oc_cmd
   changed_when: false
+  until: oc_cmd is successful
+  retries: 20
+  delay: 3
+
 
 - set_fact:
     sa_found: "{{ tmp.users | select('match', ns+'.*') | map('replace', ns, '') | select('in', istio_scc_service_accounts) | list }}"
