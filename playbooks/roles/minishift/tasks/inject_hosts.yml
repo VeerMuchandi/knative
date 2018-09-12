@@ -4,12 +4,14 @@
 - name: determine cluster ip
   command: minishift ip
   register: cluster_ip
+  changed_when: false
 
 - name: "ssh_key: get machine path"
   shell: |
     eval $(minishift docker-env)
     ls $DOCKER_CERT_PATH/../machines/knative/id_rsa
   register: cluster_sshkey
+  changed_when: false
 
 - name: set variables
   set_fact:
