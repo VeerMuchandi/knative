@@ -1,6 +1,8 @@
 # vim: ts=2 sw=2 expandtab ai
 ---
-
+knative_wait_start:
+  seconds: 60
+  delay: 10
 knative_scc_policy: anyuid
 knative_scc_service_accounts:
   - system:serviceaccount:knative-build:build-controller

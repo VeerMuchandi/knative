@@ -47,5 +47,5 @@
   failed_when: "oc_cmd.rc != 0 or (oc_cmd.stdout_lines | length ) < (knative_deployments | length)"
   changed_when: false
   until: oc_cmd is successful
-  retries: 30
-  delay: 10
+  retries: "{{ (knative_wait_start.seconds / knative_wait_start.delay) | int }}"
+  delay: "{{ knative_wait_start.delay }}"
