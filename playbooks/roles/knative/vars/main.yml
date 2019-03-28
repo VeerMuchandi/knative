@@ -1,0 +1,18 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+knative_wait_start:
+  seconds: 60
+  delay: 10
+knative_scc_policy: anyuid
+knative_scc_service_accounts:
+  - system:serviceaccount:knative-build:build-controller
+  - system:serviceaccount:knative-serving:controller
+  - system:serviceaccount:knative-serving:autoscaler
+  - system:serviceaccount:monitoring:kube-state-metrics
+  - system:serviceaccount:monitoring:node-exporter
+  - system:serviceaccount:monitoring:prometheus-system
+
+knative_cluster_policy: cluster-admin
+knative_cluster_accounts:
+  - system:serviceaccount:knative-build:build-controller
+  - system:serviceaccount:knative-serving:controller

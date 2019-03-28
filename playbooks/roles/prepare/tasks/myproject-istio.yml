@@ -1,0 +1,35 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+- name: login as admin
+  command: oc login -u admin -p admin
+  changed_when: false
+
+- name: Change project to myproject
+  command: "oc project myproject"
+  register: oc_cmd
+  changed_when: errstr not in oc_cmd.stdout
+  vars:
+    errstr: 'Already on project'
+
+- name: Assign privileged SCC to the default SA in myproject
+  command: "oc adm policy add-scc-to-user privileged -z default"
+  changed_when: false
+
+- name: Enable istio-injection on myproject by adding a label to the project
+  command: "oc label namespace myproject istio-injection=enabled"
+  register: oc_cmd
+  changed_when:
+    - oc_cmd.rc == 0
+  failed_when:
+    - oc_cmd.rc != 0
+    - errstr not in oc_cmd.stderr
+  vars:
+    errstr: "error: 'istio-injection' already has a value"
+
+- name: oc get ns myproject --show-labels
+  command: "oc get ns myproject --show-labels"
+  register: oc_cmd
+  changed_when: false
+
+- debug:
+    var: oc_cmd.stdout_lines

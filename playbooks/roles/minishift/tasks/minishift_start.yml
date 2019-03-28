@@ -1,0 +1,65 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+- name: ensure log dir exists
+  file:
+    path: "{{ minishift_log_dir }}"
+    state: directory
+
+- name: "check for profile: {{ minishift_profile }}"
+  shell: |
+    PROFILE=$(minishift profile list | grep '^- {{ minishift_profile }}\t')
+    ACTIVE=$(grep '(Active)' <<< "$PROFILE")
+    test "x$ACTIVE" == "x" && minishift profile set {{ minishift_profile }} || echo ""
+  register: cmd
+  changed_when: cmd.stdout | length > 0
+  notify:
+    - minishift stop
+    - minishift delete
+    - minishift start
+
+- name: set config
+  shell: |
+    CPUS=$(minishift config get {{ item.name }} | sed 's/^<nil>$//')
+    test "x$CPUS" == "x{{ item.value }}" && echo "" || {{ command }}
+  register: cmd
+  changed_when: cmd.stdout | length > 0
+  vars:
+    command: "{{ (item.value | length > 0) | ternary('minishift config set '+item.name+' '+item.value,'minishift config unset '+item.name) }}"
+  with_items:
+    - name: memory
+      value: "{{ minishift_memory }}"
+    - name: cpus
+      value: "{{ minishift_cpus }}"
+    - name: image-caching
+      value: "{{ minishift_imageCaching }}"
+    - name: iso-url
+      value: "{{ minishift_isoUrl }}"
+  notify:
+    - minishift stop
+    - minishift delete
+    - minishift start
+
+- name: "set addons: {{ minishift_addons }}"
+  shell: |
+    ALL=$(minishift addon list | cut -b 3-)
+    ENABLED=$( grep ': enabled' <<< "$ALL" | cut -d ' ' -f 1)
+    DISABLED=$( grep ': disabled' <<< "$ALL" | cut -d ' ' -f 1)
+    grep -vf <(echo "{{ ADDONS }}") <<< "$ENABLED" | xargs -n 1 minishift addon disable
+    grep -f <(echo "{{ ADDONS }}") <<< "$DISABLED" | xargs -n 1 minishift addon enable
+  args:
+    executable: /bin/bash
+  vars:
+    ADDONS: "{{ minishift_addons.split(',') | join('\n') }}"
+  register: cmd
+  changed_when: cmd.stdout | length > 0
+  notify:
+    - minishift stop
+    - minishift delete
+    - minishift start
+
+- name: Ensure minishift starts
+  command: "true"
+  notify:
+    - minishift start
+
+- meta: flush_handlers

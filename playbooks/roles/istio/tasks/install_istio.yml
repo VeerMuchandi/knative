@@ -1,0 +1,64 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+
+- name: "Check if Istio is installed"
+  command: "oc get cm -n {{ istio_ns }} istio-galley-configuration"
+  register: oc_cmd
+  changed_when:
+    - oc_cmd.rc != 0
+    - errline in oc_cmd.stderr_lines
+  failed_when:
+    - oc_cmd.rc != 0
+    - errline not in oc_cmd.stderr_lines
+  vars:
+    errline: 'Error from server (NotFound): namespaces "istio-system" not found'
+
+- name: "Install latest Istio and run it in {{ istio_service_type }} mode"
+  when: oc_cmd is changed
+  shell: |
+    set -e -E
+    T=$(mktemp)
+    trap "rm -rf $T" EXIT
+    curl -L {{ istio_url }} > $T
+    sed 's/LoadBalancer/{{ istio_service_type }}/' $T | oc apply -f -
+
+- name: "update the istio-sidecar-injector configmap"
+  register: oc_cmd
+  shell: |
+    if oc get cm istio-sidecar-injector -n istio-system -o json | grep -q --color=always 'securityContext:\\n      capabilities:'
+    then
+      oc get cm istio-sidecar-injector -n istio-system -o json | sed -e 's/securityContext:\\n      capabilities:/securityContext:\\n      privileged: true\\n      capabilities:/' | oc replace -f -
+    else
+      echo ''
+    fi
+  changed_when: teststr in oc_cmd.stdout_lines
+  vars:
+    teststr: 'configmap "istio-sidecar-injector" replaced'
+
+- name: "Get list of deployments to watch"
+  command: "oc get deployment -n {{ istio_ns }} -o json"
+  changed_when: false
+  register: istio_deployments
+
+- set_fact:
+    istio_deployments: "{{ tmp['items'] | map(attribute='metadata.name') | list }}"
+  vars:
+    tmp: "{{ istio_deployments.stdout | from_json }}"
+
+- debug:
+    var: istio
+  vars:
+    istio:
+      pods: "{{ istio_deployments | length }}"
+      deployments: "{{ istio_deployments | join(', ') }}"
+      watch_cmd: "watch oc get pods -n {{ istio_ns }}"
+
+- name: "wait for istio to come up"
+  shell: |
+    oc get pods -n {{ istio_ns }} | grep Running
+  register: oc_cmd
+  failed_when: "oc_cmd.rc != 0 or (oc_cmd.stdout_lines | length ) < (istio_deployments | length)"
+  changed_when: false
+  until: oc_cmd is successful
+  retries: "{{ (istio_wait_start.seconds / istio_wait_start.delay) | int }}"
+  delay: "{{ istio_wait_start.delay }}"

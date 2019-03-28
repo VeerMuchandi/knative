@@ -1,0 +1,7 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+- include_tasks: version_check.yml
+
+- include_tasks: minishift_start.yml
+
+- include_tasks: inject_hosts.yml

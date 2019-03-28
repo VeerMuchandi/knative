@@ -1,0 +1,22 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+- name: "knative: read in file"
+  connection: smart
+  command: "cat {{ knative_patch.file }}"
+  changed_when: false
+  register: command_out
+
+- set_fact:
+    patch_to: "{{ patch_from | combine( dict([[knative_patch.key, knative_patch.value]] ) ) }}"
+  vars:
+    patch_from: "{{ command_out.stdout | from_yaml }}"
+
+- name: "knative: patch file"
+  connection: smart
+  copy:
+    dest: "{{ knative_patch.file }}"
+    content: "{{ patch_to | to_yaml }}"
+  notify:
+    - restart api
+
+- meta: flush_handlers

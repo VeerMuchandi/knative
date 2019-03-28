@@ -1,0 +1,30 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+- name: Create minishift instance
+  any_errors_fatal: true
+  force_handlers: true
+  hosts: minishift
+  gather_facts: false
+  connection: local
+  roles:
+    - minishift
+
+- name: Test openshift node
+  any_errors_fatal: true
+  force_handlers: true
+  hosts: cluster
+  gather_facts: false
+  connection: smart
+  tasks:
+    - ping:
+
+- name: Install knative
+  any_errors_fatal: true
+  force_handlers: true
+  hosts: cluster
+  gather_facts: false
+  connection: local
+  roles:
+    - prepare
+    - istio
+    - knative

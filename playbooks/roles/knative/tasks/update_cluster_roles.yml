@@ -1,0 +1,25 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+
+- name: "get cluster roles"
+  command: "oc get clusterrolebindings -o json"
+  register: oc_cmd
+  changed_when: false
+
+- name: "filter cluster roles by service account"
+  set_fact:
+    subjects: "{{ tmp['items'] | selectattr('roleRef.name', 'eq', 'cluster-admin') | map(attribute='subjects') | flatten | selectattr('kind', 'eq', 'ServiceAccount') | list }}"
+  vars:
+    tmp: "{{ oc_cmd.stdout | from_json }}"
+
+- name: "found service accounts with cluster roles"
+  set_fact:
+    sa_found: "{{ subjects | to_json | from_json | json_query('[*].join(`:`,[`system`,`serviceaccount`,namespace,name ])') | select('in', knative_cluster_accounts) | list }}"
+
+- name: "service accounts missing cluster roles"
+  set_fact:
+    sa_missing: "{{ knative_cluster_accounts | difference(sa_found) }}"
+
+- name: "Add cluster role"
+  command: "oc adm policy add-cluster-role-to-user cluster-admin {{ item }}"
+  with_items: "{{ sa_missing }}"

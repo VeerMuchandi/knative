@@ -1,0 +1,15 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+- name: "Get minishift version"
+  command: minishift version
+  register: minishift_version
+  changed_when: "(minishift_version.stdout_lines.0.split(' '))[1][1:] is version(minishift_min_version, '<')"
+
+- name: Validate minishift version
+  assert:
+    msg:
+      required_version: "{{ minishift_min_version }}"
+      how_to_resolve: "minishift update"
+    that:
+      - minishift_version is success
+      - minishift_version is not changed

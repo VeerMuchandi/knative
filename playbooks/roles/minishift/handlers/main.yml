@@ -1,0 +1,14 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+- name: minishift stop
+  shell: "minishift stop"
+
+- name: minishift delete
+  shell: "minishift delete -f"
+
+- listen: minishift start
+  debug:
+    msg: "Starting minishift - look in {{ minishift_log_dir_console }}"
+
+- name: minishift start
+  shell: "minishift --log_dir {{ minishift_log_dir }} start | tee {{ minishift_log_dir_console }}"

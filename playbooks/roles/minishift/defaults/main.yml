@@ -1,0 +1,11 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+minishift_profile: knative
+minishift_memory: 6GB
+minishift_cpus: "4"
+minishift_imageCaching: 'true'
+minishift_isoUrl: ''
+minishift_addons: admin-user,anyuid
+minishift_log_dir: /tmp/minishift_logs
+minishift_log_dir_console: "{{ minishift_log_dir }}/console.log"
+minishift_user: docker

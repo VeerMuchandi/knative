@@ -1,0 +1,5 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+- include_tasks: knative_patch.yml
+
+- include_tasks: myproject-istio.yml

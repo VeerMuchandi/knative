@@ -1,0 +1,21 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+
+- name: "Get list of knative service accounts for {{ knative_scc_policy }}"
+  command: "oc get scc {{ knative_scc_policy }} -o json"
+  register: oc_cmd
+  changed_when: false
+
+- name: "filter users by knative service accounts"
+  set_fact:
+    sa_found: "{{ tmp.users | select('in', knative_scc_service_accounts) | list }}"
+  vars:
+    tmp: "{{ oc_cmd.stdout | from_json }}"
+
+- name: "find service accounts with missing scc"
+  set_fact:
+    sa_missing: "{{ knative_scc_service_accounts | difference(sa_found) }}"
+
+- name: "Elevate missing SCCs on the service accounts for knativeproject to {{ knative_scc_policy }}"
+  command: "oc adm policy add-scc-to-user {{ knative_scc_policy }} {{ item }}"
+  with_items: "{{ sa_missing }}"

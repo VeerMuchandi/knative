@@ -1,0 +1,8 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+
+- include_tasks: update_scc.yml
+
+- include_tasks: update_cluster_roles.yml
+
+- include_tasks: install_knative.yml

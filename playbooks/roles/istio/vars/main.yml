@@ -1,0 +1,20 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+istio_wait_start:
+  seconds: 600
+  delay: 10
+istio_ns: istio-system
+istio_scc_policy: anyuid
+istio_scc_service_accounts:
+  - istio-ingress-service-account
+  - default
+  - prometheus
+  - istio-egressgateway-service-account
+  - istio-citadel-service-account
+  - istio-ingressgateway-service-account
+  - istio-cleanup-old-ca-service-account
+  - istio-mixer-post-install-account
+  - istio-mixer-service-account
+  - istio-pilot-service-account
+  - istio-sidecar-injector-service-account
+  - istio-galley-service-account

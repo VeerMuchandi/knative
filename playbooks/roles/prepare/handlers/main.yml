@@ -1,0 +1,15 @@
+# vim: ts=2 sw=2 expandtab ai
+---
+- name: restart api
+  connection: smart
+  shell: |
+    docker stop $(docker ps -l -q --filter "label=io.kubernetes.container.name=api")
+
+- name: wait for api
+  listen: restart api
+  command: oc get projects
+  connection: local
+  register: cmd
+  until: cmd is successful
+  retries: 30
+  delay: 10
